@@ -1,0 +1,33 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        targets: wasm32-unknown-unknown
+
+    - name: Run Tests
+      run: |
+        cd rentar-contract
+        cargo test --verbose
+
+    - name: Build Contract
+      run: |
+        cd rentar-contract
+        cargo build --target wasm32-unknown-unknown --release --verbose
