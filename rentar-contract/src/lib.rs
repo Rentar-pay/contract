@@ -10,7 +10,7 @@ use errors::Error;
 use types::{AdminConfig, DataKey, LandlordEscrow, SavingsVault};
 
 use soroban_sdk::{
-    contract, contractimpl, contractmeta, symbol_short, Address, Env, IntoVal, String, Symbol, Val, Vec,
+    contract, contractimpl, contractmeta, Address, Env, String, Symbol,
 };
 
 // Metadata for the smart contract build target
@@ -51,7 +51,7 @@ fn get_vault_opt(env: &Env, tenant: &Address) -> Option<SavingsVault> {
 fn set_vault(env: &Env, tenant: &Address, vault: &SavingsVault) {
     env.storage().persistent().set(&DataKey::Vault(tenant.clone()), vault);
     // Extend TTL to optimize storage and prevent eviction (standard practice in Soroban)
-    env.storage().persistent().extend_ttl_info(
+    env.storage().persistent().extend_ttl(
         &DataKey::Vault(tenant.clone()),
         10000,  // minimum threshold
         100000, // lifetime extension
@@ -235,7 +235,7 @@ impl RentarContract {
             return Err(Error::InsufficientFunds);
         }
 
-        vault.balance = vault.balance.checked_sub(amount).ok_or(Error::ArithmeticOverflow);
+        vault.balance = vault.balance.checked_sub(amount).ok_or(Error::ArithmeticOverflow)?;
         if vault.balance < vault.target_goal {
             vault.goal_reached = false;
         }
@@ -343,7 +343,7 @@ impl RentarContract {
 
         let key = DataKey::Escrow(landlord.clone(), id_counter);
         env.storage().persistent().set(&key, &escrow);
-        env.storage().persistent().extend_ttl_info(&key, 10000, 100000);
+        env.storage().persistent().extend_ttl(&key, 10000, 100000);
 
         // Emit SavingsCreated event (or Escrow created notice)
         env.events().publish(
